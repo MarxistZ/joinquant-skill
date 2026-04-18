@@ -1,69 +1,78 @@
-# =============================================================================
-# 模板 04：股票横截面动量策略
-# =============================================================================
-# 适用场景：
-#   - 中证 500 / 沪深 300 等指数成分股
-#   - 周度调仓，过去 N 周涨幅前 K 名等权持有
-#
-# 经典文献：
-#   - Jegadeesh & Titman (1993) 横截面动量
-#   - 过去 6-12 月动量在中国 A 股表现一般，1-3 月反转更明显
-# =============================================================================
+# -*- coding: utf-8 -*-
+"""
+04 — 截面动量选股策略
+适用场景：周度调仓，从全 A 股中选近期涨幅最大的 N 只持有。
+使用方法：修改 UNIVERSE, HOLD_NUM, LOOKBACK 后粘贴到聚宽运行。
+"""
 
-import jqdata
+from jqdata import *
+
+
+UNIVERSE = '000905.XSHG'  # ← 股票池来源（中证500）
+HOLD_NUM = 20              # ← 持仓数量
+LOOKBACK = 20              # ← 动量回看天数
+MIN_MARKET_CAP = 30        # ← 最低市值（亿元），过滤壳股
 
 
 def initialize(context):
-    set_benchmark('000300.XSHG')
+    set_benchmark(UNIVERSE)
     set_option('use_real_price', True)
+
     set_order_cost(OrderCost(
         open_tax=0, close_tax=0.001,
         open_commission=0.0003, close_commission=0.0003,
         close_today_commission=0, min_commission=5,
     ), type='stock')
-    set_slippage(FixedSlippage(0.02))
+    set_slippage(PriceRelatedSlippage(0.00246))
 
-    g.universe_index = '000300.XSHG'
-    g.lookback_weeks = 4
-    g.hold_num = 20
-    g.skip_recent_days = 3  # 跳过最近 N 天，避免短期反转
-
-    # 周度调仓：每周一 09:31
     run_weekly(rebalance, weekday=1, time='09:31')
 
 
 def rebalance(context):
-    stocks = get_index_stocks(g.universe_index)
+    date = context.current_dt.strftime('%Y-%m-%d')
+    stocks = get_index_stocks(UNIVERSE, date)
+    stocks = filter_stocks(stocks)
 
-    momentum_scores = {}
-    lookback_days = g.lookback_weeks * 5 + g.skip_recent_days
-
-    for stock in stocks:
-        prices = attribute_history(stock, lookback_days, '1d', ['close'])
-        if len(prices) < lookback_days or prices['close'].iloc[0] <= 0:
-            continue
-        # 跳过最近 g.skip_recent_days 天的动量
-        ret = prices['close'].iloc[-g.skip_recent_days - 1] / prices['close'].iloc[0] - 1
-        momentum_scores[stock] = ret
-
-    if not momentum_scores:
-        log.warning('无动量数据')
+    if len(stocks) < HOLD_NUM:
         return
 
-    # 排名前 hold_num
-    sorted_stocks = sorted(momentum_scores.items(), key=lambda x: x[1], reverse=True)
-    target_stocks = [s for s, _ in sorted_stocks[:g.hold_num]]
+    momentum = calc_momentum(stocks)
+    target = momentum.nlargest(HOLD_NUM).index.tolist()
 
-    # 调仓
-    cur_positions = list(context.portfolio.positions.keys())
-    for s in cur_positions:
-        if s not in target_stocks:
+    for s in list(context.portfolio.positions.keys()):
+        if s not in target:
             order_target(s, 0)
 
-    if target_stocks:
-        cash_per = context.portfolio.total_value / len(target_stocks)
-        for s in target_stocks:
-            order_target_value(s, cash_per)
+    weight = 1.0 / HOLD_NUM
+    for s in target:
+        order_target_value(s, context.portfolio.total_value * weight)
 
-    log.info('本周持仓 top %d，最高动量 %.2f%%' % (
-        g.hold_num, sorted_stocks[0][1] * 100))
+
+def calc_momentum(stocks):
+    """计算截面动量：过去 LOOKBACK 天收益率"""
+    import pandas as pd
+
+    prices = get_price(
+        stocks, count=LOOKBACK + 1, end_date=None,
+        fields=['close'], panel=False,
+    )
+    ret = prices.groupby('code')['close'].apply(
+        lambda x: x.iloc[-1] / x.iloc[0] - 1 if len(x) > 1 else 0
+    )
+    return ret
+
+
+def filter_stocks(stocks):
+    """过滤停牌、ST、涨跌停、低市值股票"""
+    current = get_current_data()
+    result = []
+    for s in stocks:
+        d = current[s]
+        if d.paused:
+            continue
+        if d.is_st or 'ST' in d.name or '*' in d.name:
+            continue
+        if d.day_open == d.high_limit or d.day_open == d.low_limit:
+            continue
+        result.append(s)
+    return result

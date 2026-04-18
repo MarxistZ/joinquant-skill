@@ -131,15 +131,15 @@ For high-stakes (live trading) strategies, additionally:
 | File | Role |
 |---|---|
 | `README.md` | Project intro |
-| `WORKFLOW.md` | Strategy development end-to-end (TODO) |
+| `WORKFLOW.md` | Strategy development end-to-end (✅ complete) |
 | `INSTALL_CN.md` | Chinese install guide (TODO) |
 | `api文档/api.txt` | Original 294KB API docs (raw backup) |
-| `references/01-14-*.md` | 14 progressive-disclosure category files (TODO: extract from api.txt) |
-| `templates/01-05-*.py` | 5 production templates (TODO) |
-| `scripts/strategy_lint.py` | Lint tool (TODO) |
-| `scripts/strategy_scaffold.py` | Generate scaffold from description (TODO) |
-| `scripts/api_search.py` | Search API by keyword (TODO) |
-| `examples/case-*` | End-to-end case studies (TODO) |
-| `tests/` | pytest (TODO) |
+| `references/01-14-*.md` | 14 progressive-disclosure category files (✅ all complete) |
+| `templates/01-05-*.py` | 5 production templates (✅ complete) |
+| `scripts/strategy_lint.py` | Lint tool (✅ operational) |
+| `scripts/strategy_scaffold.py` | Generate scaffold from description (✅ operational) |
+| `scripts/api_search.py` | Search API by keyword (✅ operational) |
+| `examples/case-*` | End-to-end case studies (✅ 2 cases) |
+| `tests/` | pytest (✅ 13 tests passing) |
 
-This skill is at version **0.1.0-init** as of 2026-04-19. Most files are TODO stubs. See PROJECT_PLAN.md for build sequence.
+This skill is at version **0.5.0** as of 2026-04-19. All 14 references + 5 templates + 3 scripts + 13 tests + WORKFLOW + 2 examples complete.

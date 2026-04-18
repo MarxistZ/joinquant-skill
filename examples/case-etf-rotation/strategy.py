@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-03 — ETF 轮动策略
-适用场景：在 N 个 ETF 中按近期动量排名，持有最强的 TOP_K 个。
-使用方法：修改 ETF_POOL 和 TOP_K 后粘贴到聚宽运行。
+案例：6 ETF 动量轮动，TOP 2，周度调仓
+基于 templates/03-etf-rotation.py 修改
 """
 
 
@@ -14,9 +13,8 @@ ETF_POOL = [
     '511010.XSHG',  # 国债ETF
     '513100.XSHG',  # 纳指ETF
 ]
-TOP_K = 2                # ← 持有最强的几个
-LOOKBACK = 20            # ← 动量回看天数
-REBALANCE_WEEKDAY = 1    # ← 每周几调仓 (1=周一)
+TOP_K = 2
+LOOKBACK = 20
 
 
 def initialize(context):
@@ -30,7 +28,7 @@ def initialize(context):
     ), type='fund')
     set_slippage(PriceRelatedSlippage(0.00246))
 
-    run_weekly(rebalance, weekday=REBALANCE_WEEKDAY, time='09:31')
+    run_weekly(rebalance, weekday=1, time='09:31')
 
 
 def rebalance(context):

@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-05 — 均值回归策略（布林带 + RSI）
-适用场景：单股票或小池子，价格偏离均值时反向操作。
-使用方法：修改 STOCKS, BB_PERIOD, RSI_PERIOD 后粘贴到聚宽运行。
+案例：平安银行 + 招商银行 布林带+RSI 均值回归
+基于 templates/05-mean-reversion.py 修改
 """
 
 
-STOCKS = ['000001.XSHE', '600036.XSHG']   # ← 交易池
-BB_PERIOD = 20        # ← 布林带周期
-BB_WIDTH = 2.0        # ← 布林带宽度（标准差倍数）
-RSI_PERIOD = 14       # ← RSI 周期
-RSI_OVERSOLD = 30     # ← RSI 超卖阈值（买入信号）
-RSI_OVERBOUGHT = 70   # ← RSI 超买阈值（卖出信号）
-MAX_POS_PER_STOCK = 0.4  # ← 单只股票最大仓位比例
+STOCKS = ['000001.XSHE', '600036.XSHG']
+BB_PERIOD = 20
+BB_WIDTH = 2.0
+RSI_PERIOD = 14
+RSI_OVERSOLD = 30
+RSI_OVERBOUGHT = 70
+MAX_POS_PER_STOCK = 0.4
 
 
 def initialize(context):
@@ -50,24 +49,22 @@ def trade(context):
             available = min(context.portfolio.available_cash * 0.95, max_value)
             if available > price * 100:
                 order_value(security, available)
-                log.info('均值回归买入 %s | 价格 %.2f < 下轨 %.2f, RSI=%.1f' %
+                log.info('买入 %s | 价格 %.2f < 下轨 %.2f, RSI=%.1f' %
                          (security, price, bb_lower, rsi))
 
         elif has_pos and (price > bb_upper or rsi > RSI_OVERBOUGHT):
             order_target(security, 0)
-            log.info('均值回归卖出 %s | 价格 %.2f > 上轨 %.2f, RSI=%.1f' %
+            log.info('卖出 %s | 价格 %.2f > 上轨 %.2f, RSI=%.1f' %
                      (security, price, bb_upper, rsi))
 
 
 def calc_bollinger(close, period, width):
-    """计算布林带"""
     ma = close[-period:].mean()
     std = close[-period:].std()
     return ma, ma + width * std, ma - width * std
 
 
 def calc_rsi(close, period):
-    """计算 RSI"""
     import numpy as np
     delta = close.diff().dropna()
     gain = delta.where(delta > 0, 0)
