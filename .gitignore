@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Project outputs
+outputs/
+
+# Personal strategy code (do not commit)
+my-strategies/
+*.local.py
+
+# OS
+.DS_Store
+Thumbs.db
